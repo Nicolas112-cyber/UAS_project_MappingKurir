@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Admin Dashboard - Courier Connect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1" rel="stylesheet"/>
+</head>
+<body class="bg-gray-50 font-['Inter'] min-h-screen pb-10">
+
+    <header class="bg-white border-b px-6 py-4 flex justify-between items-center shadow-sm sticky top-0 z-10">
+        <div class="flex items-center gap-2 text-indigo-700">
+            <span class="material-symbols-outlined text-2xl">admin_panel_settings</span>
+            <span class="font-bold text-lg text-gray-800">Admin Courier Connect</span>
+        </div>
+        <span class="text-xs bg-indigo-100 text-indigo-700 font-semibold px-3 py-1 rounded-full flex items-center gap-1">
+            <span class="material-symbols-outlined text-sm">database</span> Master Data Hub
+        </span>
+    </header>
+
+    <main class="max-w-2xl mx-auto p-4 md:p-6 mt-4">
+        <div class="bg-white p-6 md:p-8 rounded-xl border border-gray-200 shadow-sm">
+            <div class="border-b pb-4 mb-6">
+                <h2 class="font-bold text-gray-800 text-xl flex items-center gap-2">
+                    <span class="material-symbols-outlined text-indigo-700">add_box</span> Input Master Paket Baru
+                </h2>
+                <p class="text-sm text-gray-500 mt-1">Masukkan detail paket pelanggan ke dalam database pusat.</p>
+            </div>
+            
+            <form id="formAdmin" onsubmit="tanganiSubmit(event)" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">Kode Resi / Barcode <span class="text-red-500">*</span></label>
+                    <input id="kode_barcode" type="text" required placeholder="CONTOH: GRK-001" class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none uppercase font-mono transition-shadow"/>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">Nama Penerima & Detail Alamat</label>
+                    <input id="nama_penerima" type="text" placeholder="Contoh: Budi Santoso - Jl. Raya Roomo" class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow"/>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Latitude (Garis Lintang)</label>
+                        <input id="lat" type="number" step="any" placeholder="-7.1623" class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow"/>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Longitude (Garis Bujur)</label>
+                        <input id="lng" type="number" step="any" placeholder="112.6154" class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow"/>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">Batas Waktu Pengiriman (Time Window)</label>
+                    <input id="jam_selesai" type="time" class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow"/>
+                    <p class="text-xs text-gray-400 mt-1">Biarkan kosong jika tidak ada batas waktu khusus.</p>
+                </div>
+
+                <div class="pt-4">
+                    <button id="btnSubmit" type="submit" class="w-full bg-indigo-600 text-white py-3.5 rounded-lg font-bold shadow-md hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined">save</span>
+                        <span>Simpan Data Paket</span>
+                    </button>
+                </div>
+            </form>
+
+            <div id="historySection" class="hidden mt-8 pt-6 border-t border-gray-200">
+                <h3 class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-green-600 text-lg">check_circle</span> 
+                    Riwayat Input Terakhir
+                </h3>
+                <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-100 text-sm space-y-1.5">
+                    <p><span class="font-semibold text-gray-600 inline-block w-24">Resi</span>: <span id="histResi" class="font-mono font-bold text-indigo-700"></span></p>
+                    <p><span class="font-semibold text-gray-600 inline-block w-24">Penerima</span>: <span id="histNama" class="text-gray-800"></span></p>
+                    <p><span class="font-semibold text-gray-600 inline-block w-24">Koordinat</span>: <span class="text-gray-800"><span id="histLat"></span>, <span id="histLng"></span></span></p>
+                    <p><span class="font-semibold text-gray-600 inline-block w-24">Batas Waktu</span>: <span id="histWaktu" class="text-gray-800"></span></p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+<script>
+    const titikDaratanGresik = [
+        { lat: -7.1578, lng: 112.6552, jalan: "Jl. Pahlawan (Kel. Alun-alun Contong)" },
+        { lat: -7.1565, lng: 112.6545, jalan: "Jl. Raden Santri (Kel. Bedilan)" },
+        { lat: -7.1610, lng: 112.6530, jalan: "Jl. KH. Zubair (Kel. Karangpoh)" },
+        { lat: -7.1550, lng: 112.6515, jalan: "Jl. KH. Kholil (Kel. Karangturi)" },
+        { lat: -7.1540, lng: 112.6530, jalan: "Jl. Nyai Ageng Arem-arem (Kel. Kebungson)" },
+        { lat: -7.1525, lng: 112.6550, jalan: "Jl. Sindujoyo (Kel. Kemuteran)" },
+        { lat: -7.1595, lng: 112.6460, jalan: "Jl. Kramat Langon (Kel. Kramatinggil)" },
+        { lat: -7.1490, lng: 112.6560, jalan: "Jl. Sindujoyo Ujung (Kel. Lumpur)" },
+        { lat: -7.1650, lng: 112.6400, jalan: "Jl. Siti Fatimah Binti Maimun (Kel. Ngipik)" },
+        { lat: -7.1570, lng: 112.6565, jalan: "Jl. KH. Wachid Hasyim (Kel. Pekauman)" },
+        { lat: -7.1580, lng: 112.6555, jalan: "Jl. Basuki Rahmat (Kel. Pekelingan)" },
+        { lat: -7.1615, lng: 112.6480, jalan: "Jl. Jaksa Agung Suprapto (Kel. Sidokumpul)" },
+        { lat: -7.1555, lng: 112.6495, jalan: "Jl. Harun Tohir (Kel. Sukodono)" },
+        { lat: -7.1630, lng: 112.6450, jalan: "Jl. Proklamasi (Kel. Sukorame)" },
+        { lat: -7.1590, lng: 112.6535, jalan: "Jl. KH. Hasyim Asyari (Kel. Tlogobendung)" },
+        { lat: -7.1610, lng: 112.6500, jalan: "Jl. Abdul Karim (Kel. Trate)" },
+        { lat: -7.1515, lng: 112.6530, jalan: "Jl. Gubernur Suryo (Kel. Pulopancikan)" },
+        { lat: -7.1645, lng: 112.6465, jalan: "Jl. Veteran Timur (Kel. Gapurosukolilo)" },
+        { lat: -7.1635, lng: 112.6540, jalan: "Jl. Gubernur Suryo Selatan (Kel. Tlogopojok)" },
+        { lat: -7.1560, lng: 112.6520, jalan: "Jl. HOS Cokroaminoto (Kel. Karangturi Barat)" },
+        { lat: -7.1750, lng: 112.6050, jalan: "Jl. Raya Dahanrejo (Desa Dahanrejo)" },
+        { lat: -7.1685, lng: 112.6310, jalan: "Jl. Sunan Giri (Desa Giri)" },
+        { lat: -7.1720, lng: 112.6280, jalan: "Jl. Veteran Gending (Kel. Gending)" },
+        { lat: -7.1850, lng: 112.6350, jalan: "Jl. Raya Gulomantung (Kel. Gulomantung)" },
+        { lat: -7.1735, lng: 112.6340, jalan: "Jl. Raya Indro (Kel. Indro)" },
+        { lat: -7.1880, lng: 112.6310, jalan: "Jl. Karangkering (Desa Karangkering)" },
+        { lat: -7.1665, lng: 112.6210, jalan: "Jl. Mayjend Sungkono (Desa Kembangan)" },
+        { lat: -7.1670, lng: 112.6270, jalan: "Jl. Klangonan (Desa Klangonan)" },
+        { lat: -7.1820, lng: 112.6150, jalan: "Jl. Raya Kedanyang (Desa Kedanyang)" },
+        { lat: -7.1700, lng: 112.6230, jalan: "Jl. Sunan Prapen (Kel. Kebomas)" },
+        { lat: -7.1620, lng: 112.6150, jalan: "Jl. Ngargosari (Desa Ngargosari)" },
+        { lat: -7.1780, lng: 112.6100, jalan: "Jl. Prambangan (Desa Prambangan)" },
+        { lat: -7.1585, lng: 112.6180, jalan: "Jl. Sumatra GKB (Desa Randuagung)" },
+        { lat: -7.1750, lng: 112.6410, jalan: "Jl. Segoromulyo (Kel. Segoromulyo)" },
+        { lat: -7.1650, lng: 112.6300, jalan: "Jl. Kapten Dulasim (Kel. Sidomoro)" },
+        { lat: -7.1680, lng: 112.6340, jalan: "Jl. Sidomukti (Kel. Sidomukti)" },
+        { lat: -7.1695, lng: 112.6280, jalan: "Jl. Singosari (Kel. Singosari)" },
+        { lat: -7.1600, lng: 112.6100, jalan: "Jl. Sukorejo (Desa Sukorejo)" },
+        { lat: -7.1550, lng: 112.6220, jalan: "Jl. Jawa GKB (Desa Randuagung Utara)" },
+        { lat: -7.1675, lng: 112.6180, jalan: "Jl. Dr. Wahidin Sudirohusodo (Desa Kembangan)" }
+    ];
+
+    const daftarNama = ["Budi Santoso", "Siti Aminah", "Andi Irawan", "Dewi Lestari", "Agus Pratama", "Ayu Wandira", "Joko Anwar"];
+
+    async function tanganiSubmit(e) {
+        e.preventDefault();
+        
+        let btn = document.getElementById('btnSubmit');
+        let originalText = btn.innerHTML;
+        
+        let resiInput = document.getElementById('kode_barcode').value;
+        let resi = resiInput.trim().toUpperCase();
+
+        if (resi === 'DEMO40') {
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> <span>Menginjeksi 40 Data...</span>';
+            btn.disabled = true;
+
+            let payloadList = [];
+            
+            for (let i = 0; i < titikDaratanGresik.length; i++) {
+                let titik = titikDaratanGresik[i];
+                
+                let indexNama = i % daftarNama.length;
+                let namaAcak = daftarNama[indexNama] + " (" + (i + 1) + ")";
+                
+                let jam_selesai = null;
+                if (i % 3 === 0) {
+                    let jam = 10 + (i % 7);
+                    let jamString = jam.toString();
+                    if (jam < 10) {
+                        jamString = "0" + jamString;
+                    }
+                    jam_selesai = jamString + ":00";
+                }
+
+                let nomor = i + 1;
+                let nomorStr = nomor.toString();
+                if (nomor < 10) {
+                    nomorStr = "00" + nomorStr;
+                } else if (nomor < 100) {
+                    nomorStr = "0" + nomorStr;
+                }
+                let kode_barcode = "GRK-" + nomorStr;
+
+                let dataPaket = {
+                    kode_barcode: kode_barcode,
+                    nama_penerima: namaAcak + " - " + titik.jalan,
+                    lat: titik.lat,
+                    lng: titik.lng,
+                    jam_selesai: jam_selesai
+                };
+                
+                payloadList.push(dataPaket);
+            }
+
+            try {
+                let reqOptions = {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ paketList: payloadList })
+                };
+                
+                const res = await fetch('/api/paket/bulk', reqOptions);
+
+                if (res.ok) {
+                    alert('✅ [MAGIC COMMAND SUCCESS] 40 Data Paket Dummy berhasil dimasukkan ke Database!');
+                    document.getElementById('formAdmin').reset();
+                    document.getElementById('historySection').classList.add('hidden');
+                } else {
+                    alert('Gagal tersambung ke backend.');
+                }
+            } catch (error) {
+                alert('Gagal tersambung ke server.');
+            }
+            
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            return;
+        }
+
+        let nama = document.getElementById('nama_penerima').value.trim();
+        let lat = parseFloat(document.getElementById('lat').value);
+        let lng = parseFloat(document.getElementById('lng').value);
+        let jam = document.getElementById('jam_selesai').value;
+
+        if (nama === "" || isNaN(lat) || isNaN(lng)) {
+            alert('Harap isi Nama, Latitude, dan Longitude dengan benar.');
+            return;
+        }
+
+        btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> <span>Menyimpan...</span>';
+        btn.disabled = true;
+
+        let payload = {
+            kode_barcode: resi,
+            nama_penerima: nama,
+            lat: lat,
+            lng: lng,
+            jam_selesai: jam
+        };
+
+        try {
+            let reqOptions = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            };
+            
+            const res = await fetch('/api/paket', reqOptions);
+
+            if (res.ok) {
+                alert('✅ Paket ' + resi + ' berhasil disimpan ke database!');
+                
+                document.getElementById('historySection').classList.remove('hidden');
+                document.getElementById('histResi').innerText = resi;
+                document.getElementById('histNama').innerText = nama;
+                document.getElementById('histLat').innerText = lat;
+                document.getElementById('histLng').innerText = lng;
+                
+                if (jam) {
+                    document.getElementById('histWaktu').innerText = jam + " WIB";
+                } else {
+                    document.getElementById('histWaktu').innerText = 'Tidak ada batasan (Bebas)';
+                }
+
+                document.getElementById('formAdmin').reset();
+            } else {
+                alert('Gagal menyimpan paket ke database.');
+            }
+        } catch (error) {
+            alert('Gagal tersambung ke server.');
+        }
+
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+</script>
+</body>
+</html>

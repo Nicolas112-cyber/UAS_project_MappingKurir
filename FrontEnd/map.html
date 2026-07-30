@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peta Navigasi - Courier Connect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style> 
+        body { font-family: 'Quicksand', sans-serif; }
+        .font-inter { font-family: 'Inter', sans-serif; }
+        
+        #map { width: 100%; height: 100%; z-index: 1; } 
+        
+        .bg-sidebar-red {
+            background-color: #ba001b;
+        }
+
+        .marker-number-pin {
+            background: linear-gradient(135deg, #475569, #1e293b);
+            color: #ffffff;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 14px;
+            border: 3px solid #ffffff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .marker-number-pin:hover { transform: scale(1.15) translateY(-4px); }
+        .marker-active {
+            background: linear-gradient(135deg, #ef4444, #ba001b) !important;
+        }
+        .marker-pos-paket {
+            background: linear-gradient(135deg, #f97316, #ea580c) !important; 
+            width: 36px;
+            height: 36px;
+            z-index: 1000 !important;
+        }
+        .marker-selesai {
+            background: linear-gradient(135deg, #475569, #1e293b) !important; 
+            transform: scale(0.9);
+            opacity: 0.5;
+        }
+        .custom-arrow-icon {
+            background: transparent;
+            border: none;
+        }
+        
+        .motor-marker-custom {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #ba001b; 
+            color: white;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            border: 3px solid white;
+            box-shadow: 0 4px 12px rgba(186, 0, 27, 0.5);
+            z-index: 2000 !important;
+            transition: transform 0.1s;
+        }
+        .animasi-ngegas {
+            animation: revving 0.08s infinite alternate;
+        }
+        @keyframes revving {
+            0% { transform: translate(-2px, 1px) rotate(-5deg); }
+            100% { transform: translate(2px, -1px) rotate(5deg); }
+        }
+
+        .lollipop-pin {
+            width: 28px;
+            height: 28px;
+            background: radial-gradient(circle, #e11d48, #ba001b);
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+            position: relative;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .lollipop-pin:active { cursor: grabbing; transform: scale(1.1); transition: transform 0.1s; }
+        .lollipop-pin::after {
+            content: '';
+            position: absolute;
+            width: 5px;
+            height: 26px;
+            background: linear-gradient(to bottom, #94a3b8, #64748b);
+            bottom: -26px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 3px;
+            box-shadow: 1px 2px 4px rgba(0,0,0,0.3);
+            z-index: -1;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.5); }
+    </style>
+</head>
+<body class="bg-red-50 h-screen flex flex-col md:flex-row overflow-hidden">
+    
+    <div class="w-full md:w-[420px] bg-sidebar-red border-r border-red-900 flex flex-col h-full z-10 shadow-2xl relative">
+        <div class="p-5 bg-white rounded-b-3xl shadow-sm border-b border-red-100 flex flex-col gap-3 relative z-20">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="bg-red-100 p-2 rounded-xl text-[#ba001b]">
+                        <span class="material-symbols-outlined text-2xl block">two_wheeler</span>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-slate-800 text-lg leading-tight">Rute Kamu Hari Ini</h1>
+                        <p class="text-xs font-semibold text-slate-400">Tetap semangat & hati-hati! 🚀</p>
+                    </div>
+                </div>
+                <a href="input.html" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-2 rounded-full font-bold transition-colors flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">west</span> Balik
+                </a>
+            </div>
+        </div>
+
+        <div class="flex-grow overflow-y-auto p-4 relative">
+            <div class="flex justify-between items-center mb-4 px-1">
+                <h2 id="status_rute_teks" class="text-[11px] font-bold text-white uppercase tracking-wider bg-black/20 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm">Daftar Antaran</h2>
+                <span id="badge_status_rute" class="text-[11px] bg-red-100 text-[#ba001b] px-3 py-1 rounded-full font-bold shadow-sm border border-red-200">✨ Auto-Navigasi</span>
+            </div>
+            
+            <div id="daftar_penerima" class="space-y-3">
+                <div class="bg-white p-6 rounded-3xl text-center shadow-sm border border-slate-100">
+                    <span class="material-symbols-outlined animate-bounce text-4xl text-[#ba001b] mb-2">two_wheeler</span>
+                    <p class="text-sm text-slate-500 font-medium">Tunggu bentar ya,<br> Lagi proses </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-grow relative h-full">
+        <div id="map"></div>
+        
+        <button onclick="openModalKendala()" class="absolute bottom-8 right-6 md:top-6 md:bottom-auto bg-white text-[#ba001b] px-4 py-3 rounded-2xl shadow-xl border border-red-100 hover:bg-red-50 hover:text-red-700 transition-all active:scale-95 flex items-center justify-center gap-2 z-[1000] group" title="Lapor Kendala Jalan">
+            <div class="bg-red-100 p-1.5 rounded-full group-hover:bg-red-200 transition-colors">
+                <span class="material-symbols-outlined text-xl block">traffic</span>
+            </div>
+            <span class="font-bold text-sm">Lapor Kendala</span>
+        </button>
+    </div>
+
+    <div id="containerPilihTitik" class="hidden absolute inset-0 z-[1500] pointer-events-none flex-col items-center justify-end pb-12">
+        <div class="bg-slate-900/80 text-white text-sm font-medium px-5 py-2.5 rounded-full mb-4 shadow-lg backdrop-blur-sm pointer-events-auto flex items-center gap-2 animate-bounce">
+             <span class="material-symbols-outlined text-[18px]">touch_app</span> Geser pin lolipop ke jalan macet
+        </div>
+        <button onclick="selesaiPilihTitik()" class="pointer-events-auto bg-[#ba001b] text-white px-8 py-3.5 rounded-full font-bold shadow-lg shadow-red-900/30 hover:bg-red-800 active:scale-95 transition-all flex items-center gap-2">
+            Lanjutkan <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+        </button>
+    </div>
+
+    <div id="modalKendala" class="hidden fixed inset-0 z-[2000] flex items-center justify-center p-4 transition-opacity pointer-events-none">
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] pointer-events-auto" onclick="closeModalKendala()"></div>
+        
+        <div class="bg-white rounded-[2rem] p-6 w-full max-w-sm shadow-2xl border border-slate-100 pointer-events-auto relative mt-32 md:mt-0">
+            <div class="flex flex-col items-center text-center border-b border-slate-100 pb-4 mb-4">
+                <div class="bg-orange-100 text-orange-500 p-3 rounded-full mb-3">
+                    <span class="material-symbols-outlined text-3xl block">warning</span>
+                </div>
+                <h3 class="font-bold text-slate-800 text-lg">Ups, Ada Kendala? 🚧</h3>
+                <p class="text-xs text-slate-500 mt-1">Sistem udah baca lokasimu kok. Tinggal masukin detailnya aja.</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs font-bold text-slate-600 mb-1.5 block pl-1">Nama Jalan / Titik Lokasi</label>
+                    <div class="relative flex items-center">
+                        <input id="nama_lokasi" type="text" placeholder="Cth: Depan Indomaret Roomo..." class="w-full bg-slate-50 border border-slate-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 rounded-xl p-3 pr-12 text-sm font-medium outline-none transition-all">
+                        <button type="button" onclick="mulaiPilihTitik()" class="absolute right-2 w-8 h-8 bg-red-100 text-[#ba001b] rounded-lg hover:bg-red-200 transition-colors flex items-center justify-center" title="Pilih Lokasi di Peta">
+                            <span class="material-symbols-outlined text-[18px]">location_on</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3 hidden">
+                    <input id="lat_kendala" type="number" step="any" readonly>
+                    <input id="lng_kendala" type="number" step="any" readonly>
+                </div>
+                
+                <div>
+                    <label class="text-xs font-bold text-slate-600 mb-1.5 block pl-1">Kenapa nih jalannya?</label>
+                    <select id="jenis_kendala" class="w-full bg-slate-50 border border-slate-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 rounded-xl p-3 text-sm font-medium outline-none appearance-none transition-all">
+                        <option value="macet">🚗 Macet Parah (Cari Alternatif)</option>
+                        <option value="ditutup">🚧 Jalan Ditutup (Putar Balik)</option>
+                    </select>
+                </div>
+                
+                <div class="flex gap-3 pt-2">
+                    <button onclick="closeModalKendala()" class="w-1/3 bg-slate-50 text-slate-600 py-3.5 rounded-xl font-bold hover:bg-slate-100 transition-colors border border-slate-200">Batal</button>
+                    <button id="btn_kirim_kendala" onclick="simpanKendala()" class="w-2/3 bg-[#ba001b] text-white py-3.5 rounded-xl font-bold hover:bg-red-800 transition-colors shadow-lg shadow-red-900/30 flex items-center justify-center gap-2">
+                        Ganti Rute!
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const map = L.map('map', { zoomControl: false }).setView([-7.160, 112.620], 14);
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        subdomains: 'abcd',
+        maxZoom: 19
+    }).addTo(map);
+
+    let markerGroup = L.layerGroup().addTo(map);
+    let kendalaVisualGroup = L.layerGroup().addTo(map); 
+    let routeLayer = null;
+    let activeSegmentLayer = L.layerGroup().addTo(map); 
+    let motorMarker = null;
+
+    let globalRouteData = null;
+    let langkahAktif = 1; 
+    let isRuteAlternatif = false;
+    let jalurAnimasiSekarang = []; 
+
+    let tempKendalaMarker = null;
+    let daftarKendala = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+        hitungRuteOptimal();
+    });
+
+    async function hitungRuteOptimal() {
+        const resiListJSON = sessionStorage.getItem('kurirResiList');
+        const resiList = resiListJSON ? JSON.parse(resiListJSON) : [];
+
+        try {
+            const res = await fetch('/api/optimasi-rute', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ resiList: resiList.length > 0 ? resiList : null }) 
+            });
+            const data = await res.json();
+
+            if (!res.ok) throw new Error("Gagal load API");
+
+            globalRouteData = data;
+            langkahAktif = 1; 
+            isRuteAlternatif = false;
+            
+            renderPetaDanUI();
+        } catch(err) {
+            console.log(err);
+        }
+    }
+
+    function tandaiSelesai(event, targetIndex, btnElement) {
+        event.stopPropagation();
+        if(langkahAktif >= globalRouteData.urutan_paket.length) return;
+
+        btnElement.disabled = true;
+        btnElement.innerHTML = `<span class="material-symbols-outlined text-[16px] animate-spin">refresh</span> Gas...`;
+        btnElement.classList.replace('bg-[#ba001b]', 'bg-slate-500');
+
+        const motorIconElement = document.getElementById('motor-icon-element');
+        if(motorIconElement) motorIconElement.classList.add('animasi-ngegas');
+
+        setTimeout(() => {
+            if(motorIconElement) motorIconElement.classList.remove('animasi-ngegas');
+
+            jalankanAnimasiMotor(() => {
+                if(langkahAktif < globalRouteData.urutan_paket.length - 1) {
+                    langkahAktif++;
+                    isRuteAlternatif = false;
+                } else {
+                    langkahAktif = 999; 
+                }
+                renderPetaDanUI();
+            });
+        }, 800); 
+    }
+
+    function jalankanAnimasiMotor(onComplete) {
+        if (!motorMarker || jalurAnimasiSekarang.length === 0) {
+            onComplete();
+            return;
+        }
+
+        const durasi = 1000; 
+        let startTime = null;
+
+        function step(timestamp) {
+            if (!startTime) startTime = timestamp;
+            let progress = (timestamp - startTime) / durasi;
+            if (progress > 1) progress = 1;
+
+            let indexFloat = progress * (jalurAnimasiSekarang.length - 1);
+            let index = Math.floor(indexFloat);
+            let nextIndex = Math.min(index + 1, jalurAnimasiSekarang.length - 1);
+            let t = indexFloat - index;
+
+            let currentLat = jalurAnimasiSekarang[index].lat + (jalurAnimasiSekarang[nextIndex].lat - jalurAnimasiSekarang[index].lat) * t;
+            let currentLng = jalurAnimasiSekarang[index].lng + (jalurAnimasiSekarang[nextIndex].lng - jalurAnimasiSekarang[index].lng) * t;
+
+            motorMarker.setLatLng([currentLat, currentLng]);
+
+            if (progress < 1) {
+                requestAnimationFrame(step);
+            } else {
+                onComplete();
+            }
+        }
+        requestAnimationFrame(step);
+    }
+
+    function renderPetaDanUI() {
+        if (!globalRouteData) return;
+
+        markerGroup.clearLayers();
+        activeSegmentLayer.clearLayers(); 
+        if (routeLayer) map.removeLayer(routeLayer);
+        if (motorMarker) {
+            map.removeLayer(motorMarker);
+            motorMarker = null;
+        }
+
+        const container = document.getElementById('daftar_penerima');
+        container.innerHTML = '';
+        jalurAnimasiSekarang = [];
+
+        const badgeRute = document.getElementById('badge_status_rute');
+        if(isRuteAlternatif) {
+            badgeRute.className = "text-[11px] bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-bold shadow-sm border border-blue-200 flex items-center gap-1";
+            badgeRute.innerHTML = `<span class="material-symbols-outlined text-[14px]">alt_route</span> Rute Alternatif`;
+        } else {
+            badgeRute.className = "text-[11px] bg-red-100 text-[#ba001b] px-3 py-1 rounded-full font-bold shadow-sm border border-red-200 flex items-center gap-1";
+            badgeRute.innerHTML = `✨ Auto-Navigasi`;
+        }
+
+        globalRouteData.urutan_paket.forEach((p, idx) => {
+            const pos = [p.latitude, p.longitude];
+            const isPosPaket = idx === 0;
+            const isActive = idx === langkahAktif;
+            const isDone = idx > 0 && idx < langkahAktif;
+            const card = document.createElement('div');
+            
+            let cardClass = `p-4 rounded-3xl border flex flex-col gap-3 transition-all duration-300 cursor-pointer relative overflow-hidden `;
+            
+            if (isPosPaket) {
+                cardClass += `bg-orange-50 border-orange-200 shadow-sm`;
+            } else if (isActive) {
+                cardClass += isRuteAlternatif ? `bg-blue-50 border-blue-300 shadow-md ring-2 ring-blue-200` : `bg-red-50 border-red-300 shadow-md ring-2 ring-red-200`;
+            } else if (isDone) {
+                cardClass += `bg-slate-50 border-slate-200 opacity-50 grayscale`;
+            } else {
+                cardClass += `bg-white border-slate-200 shadow-sm hover:border-slate-300 hover:shadow-md`;
+            }
+
+            card.className = cardClass;
+            card.onclick = () => map.flyTo(pos, 17, { animate: true, duration: 1 });
+
+            let iconKiri = '';
+            if (isPosPaket) {
+                iconKiri = `<div class="bg-gradient-to-br from-orange-400 to-orange-600 text-white rounded-2xl w-10 h-10 flex items-center justify-center shrink-0 shadow-sm border-2 border-white"><span class="material-symbols-outlined text-lg">storefront</span></div>`;
+            } else if (isDone) {
+                iconKiri = `<div class="bg-gradient-to-br from-slate-700 to-slate-900 opacity-70 text-white rounded-2xl w-10 h-10 flex items-center justify-center shrink-0 shadow-sm border-2 border-white"><span class="material-symbols-outlined text-xl">check</span></div>`;
+            } else {
+                const bgWarna = isActive ? (isRuteAlternatif ? 'from-blue-500 to-blue-700' : 'from-red-500 to-[#ba001b]') : 'from-slate-700 to-slate-900';
+                iconKiri = `<div class="bg-gradient-to-br ${bgWarna} text-white font-extrabold text-sm rounded-2xl w-10 h-10 flex items-center justify-center shrink-0 shadow-sm border-2 border-white">${idx}</div>`;
+            }
+
+            const btnSelesai = isActive 
+                ? `<button onclick="tandaiSelesai(event, ${idx}, this)" class="mt-2 w-full bg-[#ba001b] text-white py-2.5 rounded-xl text-xs font-bold shadow-md hover:bg-red-800 active:scale-[0.98] transition-transform flex items-center justify-center gap-1.5"><span class="material-symbols-outlined text-[16px]">task_alt</span> Selesai </button>`
+                : '';
+
+            const timeWindowHtml = (p.jam_selesai_tw && !isPosPaket) 
+                ? `<span class="text-[10px] font-bold text-red-600 bg-red-100 px-2 py-1 rounded-lg flex items-center gap-1 w-max"><span class="material-symbols-outlined text-[12px]">schedule</span>${p.jam_selesai_tw} WIB</span>` 
+                : '';
+
+            card.innerHTML = `
+                <div class="flex items-start gap-3">
+                    ${iconKiri}
+                    <div class="flex-grow pt-0.5">
+                        <div class="flex justify-between items-start mb-0.5">
+                            <p class="font-inter text-xs font-bold text-slate-400">${isPosPaket ? '<span class="text-orange-500 tracking-wide">📍 GUDANG UTAMA</span>' : p.kode_barcode}</p>
+                            ${timeWindowHtml}
+                        </div>
+                        <p class="text-[15px] font-bold text-slate-800 ${isDone ? 'line-through text-slate-500' : ''}">${isPosPaket ? 'Titik Awal Keberangkatan' : p.nama_penerima}</p>
+                    </div>
+                </div>
+                ${btnSelesai}
+            `;
+            container.appendChild(card);
+
+            let markerHtml = '';
+            let markerClass = 'marker-number-pin';
+
+            if (isPosPaket) {
+                markerClass += ' marker-pos-paket';
+                markerHtml = `<span class="material-symbols-outlined" style="font-size:18px;">storefront</span>`;
+            } else if (isDone) {
+                markerClass += ' marker-selesai';
+                markerHtml = `<span class="material-symbols-outlined" style="font-size:16px;">check</span>`;
+            } else {
+                markerHtml = idx;
+                if(isActive) markerClass += isRuteAlternatif ? ' !from-blue-500 !to-blue-700 !scale-110' : ' marker-active !scale-110';
+            }
+
+            const customIcon = L.divIcon({
+                className: '',
+                html: `<div class="${markerClass}">${markerHtml}</div>`,
+                iconSize: [32, 32],
+                iconAnchor: [16, 16]
+            });
+
+            L.marker(pos, { icon: customIcon })
+                .bindPopup(`<div class="font-bold font-inter text-sm px-2 py-1">${isPosPaket ? '🏠 Pos Gudang' : '📦 ' + p.nama_penerima}</div>`)
+                .addTo(markerGroup);
+        });
+
+        if (globalRouteData.geometry) {
+            routeLayer = L.geoJSON(globalRouteData.geometry, {
+                style: {
+                    color: '#94a3b8',
+                    weight: 5,
+                    opacity: 0.5,
+                    lineCap: 'round',
+                    dashArray: '10, 10'
+                }
+            }).addTo(map);
+
+            if (langkahAktif < globalRouteData.urutan_paket.length) {
+                let semuaTitikGeoJSON = [];
+                function ekstrakTitik(layer) {
+                    if (layer instanceof L.Polyline && !(layer instanceof L.Polygon)) {
+                        const lls = layer.getLatLngs();
+                        const flatten = (arr) => {
+                            if (Array.isArray(arr[0])) arr.forEach(flatten);
+                            else semuaTitikGeoJSON.push(...arr);
+                        };
+                        flatten(lls);
+                    } else if (layer.eachLayer) { layer.eachLayer(ekstrakTitik); }
+                }
+                ekstrakTitik(routeLayer);
+
+                if (semuaTitikGeoJSON.length > 1) {
+                    const tStart = L.latLng(globalRouteData.urutan_paket[langkahAktif - 1].latitude, globalRouteData.urutan_paket[langkahAktif - 1].longitude);
+                    const tEnd = L.latLng(globalRouteData.urutan_paket[langkahAktif].latitude, globalRouteData.urutan_paket[langkahAktif].longitude);
+                    let idxStart = 0, idxEnd = semuaTitikGeoJSON.length - 1;
+                    let minDStart = Infinity, minDEnd = Infinity;
+
+                    semuaTitikGeoJSON.forEach((ll, i) => {
+                        let dS = ll.distanceTo(tStart);
+                        let dE = ll.distanceTo(tEnd);
+                        if (dS < minDStart) { minDStart = dS; idxStart = i; }
+                        if (dE < minDEnd) { minDEnd = dE; idxEnd = i; }
+                    });
+
+                    const sliceAwal = Math.min(idxStart, idxEnd);
+                    const sliceAkhir = Math.max(idxStart, idxEnd);
+                    let ruteAktif = semuaTitikGeoJSON.slice(sliceAwal, sliceAkhir + 1);
+                    
+                    if (idxStart > idxEnd) {
+                        ruteAktif.reverse();
+                    }
+
+                    const activeColor = isRuteAlternatif ? '#3b82f6' : '#ba001b';
+                    jalurAnimasiSekarang = ruteAktif; 
+
+                    L.polyline(ruteAktif, {
+                        color: activeColor, 
+                        weight: 6,
+                        opacity: 0.9,
+                        lineCap: 'round',
+                        lineJoin: 'round'
+                    }).addTo(activeSegmentLayer);
+
+                    let akumulasiJarak = 300; 
+                    const intervalPanah = 600; 
+                    let panahTersimpan = []; 
+
+                    for (let i = 0; i < ruteAktif.length - 1; i++) {
+                        const p1 = ruteAktif[i];
+                        const p2 = ruteAktif[i+1];
+                        akumulasiJarak += p1.distanceTo(p2);
+                        
+                        if (akumulasiJarak > intervalPanah) {
+                            const midLat = (p1.lat + p2.lat) / 2;
+                            const midLng = (p1.lng + p2.lng) / 2;
+                            const currentLatLng = L.latLng(midLat, midLng);
+
+                            let terlaluDekat = false;
+                            for (let j = 0; j < panahTersimpan.length; j++) {
+                                if (currentLatLng.distanceTo(panahTersimpan[j]) < 150) { 
+                                    terlaluDekat = true;
+                                    break;
+                                }
+                            }
+
+                            if (!terlaluDekat) {
+                                const bearing = Math.atan2(p2.lng - p1.lng, p2.lat - p1.lat) * (180 / Math.PI);
+                                panahTersimpan.push(currentLatLng);
+
+                                const arrowIcon = L.divIcon({
+                                    className: 'custom-arrow-icon',
+                                    html: `<div style="transform: rotate(${bearing}deg); display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
+                                              <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: #ffffff; stroke: ${activeColor}; stroke-width: 2.5px; filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.2));">
+                                                  <path d="M12 2L22 20L12 17L2 20Z" />
+                                              </svg>
+                                           </div>`,
+                                    iconSize: [20, 20],
+                                    iconAnchor: [10, 10] 
+                                });
+
+                                L.marker([midLat, midLng], { icon: arrowIcon, interactive: false, keyboard: false }).addTo(activeSegmentLayer);
+                            }
+                            akumulasiJarak = 0;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (langkahAktif < globalRouteData.urutan_paket.length && jalurAnimasiSekarang.length > 0) {
+            const motorIconHtml = L.divIcon({
+                className: '',
+                html: `<div id="motor-icon-element" class="motor-marker-custom"><span class="material-symbols-outlined text-[20px]">two_wheeler</span></div>`,
+                iconSize: [36, 36],
+                iconAnchor: [18, 18]
+            });
+            
+            motorMarker = L.marker(jalurAnimasiSekarang[0], { icon: motorIconHtml, zIndexOffset: 1000 }).addTo(map);
+        }
+    }
+
+    function openModalKendala() { 
+        let defaultLat = map.getCenter().lat;
+        let defaultLng = map.getCenter().lng;
+
+        if (globalRouteData && langkahAktif < globalRouteData.urutan_paket.length) {
+            const titikSblm = globalRouteData.urutan_paket[langkahAktif - 1];
+            const titikTujuan = globalRouteData.urutan_paket[langkahAktif];
+            defaultLat = (titikSblm.latitude + titikTujuan.latitude) / 2;
+            defaultLng = (titikSblm.longitude + titikTujuan.longitude) / 2;
+            map.flyTo([defaultLat, defaultLng], 16, { animate: true, duration: 1 });
+        }
+
+        document.getElementById('lat_kendala').value = defaultLat.toFixed(5);
+        document.getElementById('lng_kendala').value = defaultLng.toFixed(5);
+
+        if (!tempKendalaMarker) {
+            const lolipopIcon = L.divIcon({
+                className: 'bg-transparent',
+                html: `<div class="lollipop-pin"><span class="material-symbols-outlined text-[16px]">close</span></div>`,
+                iconSize: [28, 54],
+                iconAnchor: [14, 54]
+            });
+            tempKendalaMarker = L.marker([defaultLat, defaultLng], { icon: lolipopIcon, draggable: true, zIndexOffset: 3000 }).addTo(map);
+            
+            tempKendalaMarker.on('dragend', function(e) {
+                const pos = e.target.getLatLng();
+                document.getElementById('lat_kendala').value = pos.lat.toFixed(5);
+                document.getElementById('lng_kendala').value = pos.lng.toFixed(5);
+                map.panTo(pos);
+            });
+        } else {
+            tempKendalaMarker.setLatLng([defaultLat, defaultLng]);
+        }
+
+        document.getElementById('modalKendala').classList.remove('hidden'); 
+    }
+
+    function mulaiPilihTitik() {
+        document.getElementById('modalKendala').classList.add('hidden');
+        document.getElementById('containerPilihTitik').classList.remove('hidden');
+        document.getElementById('containerPilihTitik').classList.add('flex');
+    }
+
+    function selesaiPilihTitik() {
+        document.getElementById('containerPilihTitik').classList.add('hidden');
+        document.getElementById('containerPilihTitik').classList.remove('flex');
+        document.getElementById('modalKendala').classList.remove('hidden');
+    }
+
+    function closeModalKendala() { 
+        document.getElementById('modalKendala').classList.add('hidden'); 
+        document.getElementById('containerPilihTitik').classList.add('hidden');
+        document.getElementById('containerPilihTitik').classList.remove('flex');
+        
+        document.getElementById('nama_lokasi').value = '';
+        if(tempKendalaMarker) {
+            map.removeLayer(tempKendalaMarker);
+            tempKendalaMarker = null;
+        }
+    }
+
+    async function simpanKendala() {
+        const btn = document.getElementById('btn_kirim_kendala');
+        const originalText = btn.innerHTML;
+        const lat = parseFloat(document.getElementById('lat_kendala').value);
+        const lng = parseFloat(document.getElementById('lng_kendala').value);
+        const jenis = document.getElementById('jenis_kendala').value;
+
+        if (!lat || !lng) return;
+
+        btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-[16px]">refresh</span> Merombak Rute...`;
+        btn.disabled = true;
+
+        daftarKendala.push({ latitude: lat, longitude: lng, jenis: jenis });
+
+        const warnaKendala = (jenis === 'macet') ? '#1e3a8a' : '#000000';
+        
+        L.circle([lat, lng], {
+            color: warnaKendala,
+            fillColor: warnaKendala,
+            fillOpacity: 0.4,
+            radius: (jenis === 'macet') ? 70 : 100,
+            weight: 2
+        }).addTo(kendalaVisualGroup);
+
+        const lokasiSekarang = globalRouteData.urutan_paket[langkahAktif - 1];
+        const sisaPaket = globalRouteData.urutan_paket.slice(langkahAktif);
+        const targetMacet = sisaPaket.length > 0 ? sisaPaket[0].kode_barcode : null;
+
+        if (sisaPaket.length > 0) {
+            try {
+                const res = await fetch('/api/optimasi-rute-alternatif', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        lokasi_sekarang: lokasiSekarang,
+                        sisa_paket: sisaPaket,
+                        kendala: daftarKendala,
+                        blocked_target: targetMacet
+                    })
+                });
+
+                if (res.ok) {
+                    const dataBaru = await res.json();
+                    
+                    const paketSelesai = globalRouteData.urutan_paket.slice(0, langkahAktif);
+                    globalRouteData.urutan_paket = [...paketSelesai, ...dataBaru.urutan_paket];
+                    globalRouteData.geometry = dataBaru.geometry;
+                    isRuteAlternatif = true;
+                    
+                    renderPetaDanUI();
+                }
+            } catch (error) {
+                console.log(error);
+                alert("Koneksi bermasalah, menggunakan rute sebelumnya.");
+            }
+        }
+
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        closeModalKendala();
+    }
+</script>
+</body>
+</html>

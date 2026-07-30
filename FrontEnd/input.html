@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Input Paket Kurir - Courier Connect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1" rel="stylesheet"/>
+    <style>
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-gray-50 font-['Inter'] min-h-screen text-gray-800 md:flex md:justify-center">
+
+    <div class="w-full max-w-md bg-gray-50 min-h-screen flex flex-col shadow-2xl relative">
+        <div class="bg-white rounded-b-[2.5rem] pt-8 pb-6 px-6 shadow-sm border-b border-gray-100 flex justify-between items-center relative overflow-hidden z-10">
+            <div class="absolute top-0 right-0 w-40 h-40 bg-red-50 rounded-full blur-3xl -mr-16 -mt-16"></div>
+            
+            <div class="relative z-10 flex items-center gap-4">
+                <div class="relative">
+                    <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80" alt="Foto Dewi" class="w-14 h-14 rounded-full border-2 border-white shadow-md object-cover bg-gray-200"/>
+                    <div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-50 border-2 border-white rounded-full"></div>
+                </div>
+                <div>
+                    <h2 class="text-lg font-extrabold text-gray-800 leading-none">Halo, Dewi!</h2>
+                </div>
+            </div>
+            
+            <button class="relative z-10 bg-gray-50 p-2.5 rounded-full text-gray-400 hover:bg-red-50 hover:text-[#bb0020] transition-colors border border-gray-100">
+                <span class="material-symbols-outlined block text-[22px]">notifications</span>
+            </button>
+        </div>
+
+        <main class="flex-grow p-5 space-y-5 -mt-3">
+            <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden">
+                <h3 class="font-bold text-gray-800 flex items-center gap-1.5 mb-1">
+                    Scan / Ketik Resi <span class="text-lg">📦</span>
+                </h3>
+                <p class="text-[11px] text-gray-400 font-medium mb-4">Pastikan resi udah masuk data admin ya.</p>
+                
+                <div class="flex gap-2 relative z-10">
+                    <div class="relative flex-grow">
+                        <span class="material-symbols-outlined absolute left-3.5 top-3.5 text-gray-400 text-lg">qr_code_scanner</span>
+                        <input type="text" id="inputResi" placeholder="Contoh: GRK-001" class="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3.5 pl-11 pr-4 text-sm font-bold text-gray-700 focus:outline-none focus:bg-white focus:border-[#bb0020] focus:ring-4 focus:ring-red-50 uppercase font-mono transition-all">
+                    </div>
+                    <button onclick="tambahResi()" class="bg-[#bb0020] text-white px-5 rounded-2xl hover:bg-red-800 transition active:scale-[0.95] shadow-lg shadow-red-900/20 flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined font-bold">add</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 flex flex-col" style="height: calc(100vh - 280px); min-height: 350px;">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-gray-800">PAKET YANG DIBAWA HARI INI</h3>
+                    <div class="bg-red-50 border border-red-100 px-3 py-1 rounded-xl flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-[#bb0020] text-sm">inventory_2</span>
+                        <span id="badgeCount" class="text-xs font-extrabold text-[#bb0020]">0</span>
+                    </div>
+                </div>
+                
+                <div class="flex-grow overflow-y-auto relative rounded-xl mb-4 pr-1">
+                    <ul id="listResi" class="space-y-2.5">
+                        <div id="emptyState" class="absolute inset-0 flex flex-col items-center justify-center text-center opacity-60">
+                            <div class="bg-gray-50 p-4 rounded-full mb-3 border border-gray-100">
+                                <span class="material-symbols-outlined text-4xl text-gray-300 block">hourglass_empty</span>
+                            </div>
+                            <p class="text-xs text-gray-500 font-medium">.<br>Belom ada Paket yang diinput</p>
+                        </div>
+                    </ul>
+                </div>
+
+                <div class="pt-3 border-t border-gray-100 mt-auto">
+                    <button onclick="mulaiNavigasi()" class="w-full bg-gradient-to-r from-[#bb0020] to-[#99001a] text-white py-4 rounded-2xl font-bold text-sm shadow-xl shadow-red-900/20 hover:shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                        <span>Mulai Antar</span>
+                        <span class="material-symbols-outlined text-[20px]">explore</span>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+<script>
+    let keranjangResi = []; 
+
+    function tambahResi() {
+        let input = document.getElementById('inputResi');
+        let resiInput = input.value;
+        let resi = resiInput.trim().toUpperCase();
+
+        if (resi === '') {
+            alert("Waduh, resinya jangan dikosongin Mbak!");
+            return;
+        }
+
+        if (resi === 'DEMO40') {
+            for (let i = 1; i <= 40; i++) {
+                let nomor = i.toString();
+                if (i < 10) {
+                    nomor = "00" + nomor;
+                } else if (i < 100) {
+                    nomor = "0" + nomor;
+                }
+                
+                let kodeAuto = "GRK-" + nomor;
+                let sudahAda = false;
+                
+                for (let j = 0; j < keranjangResi.length; j++) {
+                    if (keranjangResi[j] === kodeAuto) {
+                        sudahAda = true;
+                        break;
+                    }
+                }
+                
+                if (sudahAda === false) {
+                    keranjangResi.push(kodeAuto);
+                }
+            }
+            input.value = ''; 
+            renderList();
+            return; 
+        }
+
+        let resiSudahMasuk = false;
+        for (let i = 0; i < keranjangResi.length; i++) {
+            if (keranjangResi[i] === resi) {
+                resiSudahMasuk = true;
+                break;
+            }
+        }
+
+        if (resiSudahMasuk === true) {
+            alert("Lho, resi ini udah masuk ke tas Mbak!");
+            return;
+        }
+
+        keranjangResi.push(resi);
+        input.value = ''; 
+        renderList();
+    }
+
+    function hapusResi(index) {
+        keranjangResi.splice(index, 1);
+        renderList();
+    }
+
+    function renderList() {
+        let listEl = document.getElementById('listResi');
+        let emptyState = document.getElementById('emptyState');
+        let badgeCount = document.getElementById('badgeCount');
+        
+        badgeCount.innerText = keranjangResi.length;
+
+        if (keranjangResi.length === 0) {
+            listEl.innerHTML = '';
+            listEl.appendChild(emptyState);
+            emptyState.style.display = 'flex';
+            return;
+        }
+
+        emptyState.style.display = 'none';
+        listEl.innerHTML = '';
+        
+        for (let i = 0; i < keranjangResi.length; i++) {
+            let resiData = keranjangResi[i];
+            
+            let barisHTML = 
+                '<li class="flex justify-between items-center bg-gray-50/50 hover:bg-gray-50 border border-gray-100 p-3 rounded-2xl transition-colors group">' +
+                    '<div class="flex items-center gap-3">' +
+                        '<div class="bg-white p-1.5 rounded-xl border border-gray-100 shadow-sm text-gray-400 group-hover:text-[#bb0020] transition-colors">' +
+                            '<span class="material-symbols-outlined text-[18px] block">local_shipping</span>' +
+                        '</div>' +
+                        '<span class="font-mono text-sm font-bold text-gray-700 tracking-wide">' + resiData + '</span>' +
+                    '</div>' +
+                    '<button onclick="hapusResi(' + i + ')" class="text-gray-300 hover:text-red-600 bg-white hover:bg-red-50 border border-gray-100 hover:border-red-200 p-1.5 rounded-xl transition-all shadow-sm">' +
+                        '<span class="material-symbols-outlined text-[18px] block">delete</span>' +
+                    '</button>' +
+                '</li>';
+                
+            listEl.innerHTML = listEl.innerHTML + barisHTML;
+        }
+    }
+
+    function mulaiNavigasi() {
+        if (keranjangResi.length < 2) {
+            alert("Minimal 2 paket Mbak yang diinput");
+            return;
+        }
+
+        sessionStorage.setItem('kurirResiList', JSON.stringify(keranjangResi));
+        
+        let btn = document.querySelector('button[onclick="mulaiNavigasi()"]');
+        btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[20px]">sync</span> <span>Menganalisis Titik...</span>';
+        btn.classList.add('opacity-90');
+
+        setTimeout(function() {
+            window.location.href = 'map.html';
+        }, 500);
+    }
+
+    document.getElementById("inputResi").addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+            event.preventDefault(); 
+            tambahResi();
+        }
+    });
+</script>
+</body>
+</html>

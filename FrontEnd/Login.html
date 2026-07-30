@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Kurir - Halaman Kurir Pengantar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1" rel="stylesheet">
+    
+    <style>
+        :root {
+            --target-x: 0px;
+            --target-y: 0px;
+        }
+        @keyframes wrapperMoveRightToLeft {
+            0% { transform: translateX(100vw); }
+            100% { transform: translateX(-100vw); }
+        }
+        @keyframes wrapperMoveLeftToCenter {
+            0% { transform: translate(-100vw, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--target-x), var(--target-y)) scale(0.02); opacity: 0; }
+        }
+        .anim-wrapper-1 { animation: wrapperMoveRightToLeft 2s linear forwards; }
+        .anim-wrapper-2 { animation: wrapperMoveLeftToCenter 2.5s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+        .motor-face-left {
+            transform: scaleX(-1) rotate(-15deg);
+            transform-origin: 30% 90%;
+        }
+        .motor-face-right {
+            transform: scaleX(1) rotate(-15deg);
+            transform-origin: 30% 90%;
+        }
+        .passenger-shock {
+            transform: rotate(-22deg) translateY(-4px);
+            display: inline-block;
+        }
+        .shock-mark {
+            animation: shockPulse 0.3s infinite alternate ease-in-out;
+        }
+        @keyframes shockPulse {
+            0% { transform: scale(0.9) translateY(0); }
+            100% { transform: scale(1.3) translateY(-6px); }
+        }
+        .smoke-puff {
+            position: absolute;
+            background: rgba(180, 180, 180, 0.8);
+            border-radius: 50%;
+            filter: blur(8px);
+            animation: puff 0.7s infinite ease-out;
+            opacity: 0;
+            z-index: -1;
+        }
+        .smoke-puff:nth-child(2) { width: 60px; height: 60px; left: -10px; bottom: 20px; animation-delay: 0s; }
+        .smoke-puff:nth-child(3) { width: 80px; height: 80px; left: -40px; bottom: 35px; animation-delay: 0.2s; }
+        .smoke-puff:nth-child(4) { width: 70px; height: 70px; left: -70px; bottom: 50px; animation-delay: 0.4s; }
+        @keyframes puff {
+            0% { transform: scale(0.3) translateX(0); opacity: 0.9; }
+            100% { transform: scale(2.5) translateX(-90px); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4 font-['Inter'] overflow-hidden">
+
+    <div id="animation-container" class="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">
+        <div id="motor-wrapper" class="absolute">
+            <div id="inner-motor" class="relative w-[350px] h-[350px]">
+                <span class="material-symbols-outlined text-[#bb0020] drop-shadow-2xl relative z-10 select-none" style="font-size: 350px; line-height: 1;">
+                    two_wheeler
+                </span>
+                <div class="absolute top-[80px] left-[175px] z-20 flex flex-col items-center">
+                    <span class="material-symbols-outlined text-gray-900 text-7xl select-none">man</span>
+                </div>
+                <div class="absolute top-[75px] left-[105px] z-20 flex flex-col items-center">
+                    <span class="material-symbols-outlined text-amber-500 font-extrabold text-4xl shock-mark absolute -top-7 select-none">priority_high</span>
+                    <span class="material-symbols-outlined text-gray-800 text-7xl passenger-shock select-none">woman</span>
+                </div>
+                <div class="smoke-puff"></div>
+                <div class="smoke-puff"></div>
+                <div class="smoke-puff"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-100 relative z-10">
+        <div class="flex flex-col items-center mb-6">
+            <div id="center-logo" class="bg-red-100 p-4 rounded-full text-[#bb0020] mb-2 transition-all duration-500 opacity-0 scale-0 shadow-[0_0_30px_rgba(187,0,32,0.25)]">
+                <span class="material-symbols-outlined text-4xl">two_wheeler</span>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">IWED-Navigation</h1>
+            <p class="text-xs text-gray-500">Sistem Navigasi Kurir Area Gresik</p>
+        </div>
+
+        <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+            <div>
+                <label for="username" class="block text-xs font-semibold text-gray-600 mb-1">ID Kurir / Username <span class="text-red-500">*</span></label>
+                <input type="text" id="username" name="username" required placeholder="Masukkan ID Kurir" class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#bb0020] bg-[#eff6ff]">
+            </div>
+            <div>
+                <label for="password" class="block text-xs font-semibold text-gray-600 mb-1">Kata Sandi <span class="text-red-500">*</span></label>
+                <input type="password" id="password" name="password" required placeholder="••••••••" class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#bb0020]">
+            </div>
+
+            <div id="errorMessage" class="hidden text-xs text-red-600 bg-red-50 p-2.5 rounded-lg border border-red-200">
+                Mohon isi ID Kurir dan Kata Sandi terlebih dahulu!
+            </div>
+
+            <button type="submit" id="submitBtn" class="w-full bg-[#bb0020] text-white py-3 rounded-lg font-bold hover:bg-red-800 transition-colors shadow-md flex items-center justify-center gap-2">
+                <span>Masuk Ke Sistem</span>
+                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </button>
+        </form>
+    </div>
+
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+        const animContainer = document.getElementById('animation-container');
+        const motorWrapper = document.getElementById('motor-wrapper');
+        const innerMotor = document.getElementById('inner-motor');
+        const targetLogo = document.getElementById('center-logo');
+
+        const rect = targetLogo.getBoundingClientRect();
+        const targetCenterX = rect.left + rect.width / 2;
+        const targetCenterY = rect.top + rect.height / 2;
+        const viewportCenterX = window.innerWidth / 2;
+        const viewportCenterY = window.innerHeight / 2;
+
+        document.documentElement.style.setProperty('--target-x', `${targetCenterX - viewportCenterX}px`);
+        document.documentElement.style.setProperty('--target-y', `${targetCenterY - viewportCenterY}px`);
+
+        innerMotor.classList.add('motor-face-left');
+        motorWrapper.classList.add('anim-wrapper-1');
+
+        setTimeout(() => {
+            motorWrapper.classList.remove('anim-wrapper-1');
+            innerMotor.classList.remove('motor-face-left');
+            
+            void motorWrapper.offsetWidth;
+
+            innerMotor.classList.add('motor-face-right');
+            motorWrapper.classList.add('anim-wrapper-2');
+
+            setTimeout(() => {
+                targetLogo.classList.remove('opacity-0', 'scale-0');
+                targetLogo.classList.add('opacity-100', 'scale-100', 'shadow-[0_0_40px_rgba(187,0,32,0.7)]');
+            }, 2100);
+
+            setTimeout(() => {
+                animContainer.classList.add('hidden');
+            }, 2500);
+
+        }, 2000);
+    });
+
+    function handleLogin(event) {
+        event.preventDefault();
+        
+        let usernameInput = document.getElementById('username').value.trim();
+        let passwordInput = document.getElementById('password').value.trim();
+        let errorMsg = document.getElementById('errorMessage');
+        let submitBtn = document.getElementById('submitBtn');
+
+        if (usernameInput === "" || passwordInput === "") {
+            errorMsg.classList.remove('hidden');
+            return;
+        }
+
+        errorMsg.classList.add('hidden');
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-85', 'bg-[#cc334e]');
+        submitBtn.innerHTML = `<span>Loading Boss.... 🏍️💨</span>`;
+
+        setTimeout(() => {
+            window.location.href = 'input.html';
+        }, 500);
+    }
+</script>
+</body>
+</html>
