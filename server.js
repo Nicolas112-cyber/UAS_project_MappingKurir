@@ -104,7 +104,6 @@ function hitungTitikBelok(latA, lonA, latB, lonB, latKendala, lonKendala) {
     const dx = lonB - lonA, dy = latB - latA;
     const length = Math.sqrt(dx * dx + dy * dy);
     
-    // REVISI: Kalibrasi ulang jarak lemparan titik belok dari ~220m menjadi ~20m
     const offset = 0.0002; 
     
     if (length === 0) return { lat: latKendala + offset, lng: lonKendala + offset };
@@ -263,7 +262,6 @@ app.post('/api/optimasi-rute', async (req, res) => {
                         parseFloat(pB.latitude), parseFloat(pB.longitude)
                     );
                     
-                    // REVISI: Toleransi deteksi garis lurus diubah ke 50 meter (0.05 km)
                     if (distKm < 0.05 && matrixWaktu[i][j] !== null) { 
                         matrixWaktu[i][j] += penalti; 
                     }
@@ -288,7 +286,6 @@ app.post('/api/optimasi-rute', async (req, res) => {
                         parseFloat(pB.latitude), parseFloat(pB.longitude)
                     );
                     
-                    // REVISI: Hanya masukkan titik belok jika rute benar-benar melewati radius sangat dekat (50 meter)
                     if (distKm < 0.05) {
                         let titikBelok = hitungTitikBelok(
                             parseFloat(pA.latitude), parseFloat(pA.longitude),
@@ -346,7 +343,6 @@ app.post('/api/optimasi-rute-alternatif', async (req, res) => {
                             parseFloat(pB.latitude), parseFloat(pB.longitude)
                         );
                         
-                        // REVISI: Toleransi deteksi garis lurus diubah ke 50 meter (0.05 km)
                         if (distKm < 0.05 && matrixWaktu[i][j] !== null) { 
                             matrixWaktu[i][j] += penalti; 
                         }
@@ -372,7 +368,6 @@ app.post('/api/optimasi-rute-alternatif', async (req, res) => {
                         parseFloat(pB.latitude), parseFloat(pB.longitude)
                     );
                     
-                    // REVISI: Penyesuaian ke 50 meter
                     if (distKm < 0.05) {
                         let titikBelok = hitungTitikBelok(
                             parseFloat(pA.latitude), parseFloat(pA.longitude),
